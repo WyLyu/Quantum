@@ -26,7 +26,7 @@ from scipy.special import eval_hermite
 from scipy.special import gamma
 from scipy.special import genlaguerre
 
-#%%
+#%% functions for the 1 DOF system 
 # class potential_energy():
 #     def __init__(self, x=0, par =np.zeros(5)):
 #         self.x = x
@@ -195,8 +195,8 @@ def potential_energy_1dof(x, par, model):
 
     Returns
     -------
-    H_jk : TYPE
-        DESCRIPTION.
+    V : TYPE
+        potential energy evaluated at x given the model system.
 
     """
     
@@ -239,7 +239,7 @@ def Qdist_H_jk_FGH(a, b, N, h, par, model):
     dp = 2*np.pi / (N-1) / dx
     H_jk = np.zeros((N,N))
     for j in range(N):
-        print(j)
+        #print(j)
         H_jk[j,j] = H_jk[j,j] + sum(2/(N-1) * h**2 * (np.arange(int((N+1)/2))*dp)**2 / 2) \
             + potential_energy_1dof((a+j*dx),par, model)
         for k in range((j+1),N):
@@ -314,7 +314,7 @@ def Wigner(a, b, N, h, eigenvec):
     # dp = 2*np.pi / (N-1) / dx
     W = np.zeros((N,N))
     for j in range(N):
-        print(j)
+        #print(j)
         for k in range(N):
             #p_k = (N - 1) / 2 * dp + k * dp
             p_k = a + k * dx
@@ -409,7 +409,7 @@ def Husimi(a, b, N, h, sigma, eigenvec):
     # dp = 2*np.pi / (N-1) / dx
     H = np.zeros((N,N))
     for j in range(N):
-        print(j)
+        #print(j)
         for k in range(N):
             #p_k = (N - 1) / 2 * dp + k * dp
             p_k = a + k * dx
@@ -479,3 +479,456 @@ def Husimi_analytic_harmonic_1(x, p, h, omega, sigma):
         *( x * x / (sigma**4) + p * p / h / h)\
         *(np.exp(- x * x / (a_square + sigma**2) - a_square * p * p * sigma * sigma/ h / h / (a_square + sigma**2)))
     return H
+
+#%% functions for the 2 DOF system 
+def V_harmonic_2dof(x, y, par):
+    """
+    
+
+    Parameters
+    ----------
+    x : TYPE
+        independent variable value of the potential energy function.
+    y : TYPE
+        independent variable value of the potential energy function.
+    par : TYPE
+        parameters of the potential energy function.
+
+    Returns
+    -------
+    V : TYPE
+        potential energy of the 2 DOF harmonic oscillator system evaluated at x, y.
+
+    """
+    
+    V = 0.5*par[6]*x*x + 0.5*par[6]*y*y
+    return V
+
+def V_SN_2dof(x, y, par):
+    """
+    
+
+    Parameters
+    ----------
+    x : TYPE
+        independent variable value of the potential energy function.
+    y : TYPE
+        independent variable value of the potential energy function.
+    par : TYPE
+        parameters of the potential energy function.
+
+    Returns
+    -------
+    V : TYPE
+        potential energy of the 2 DOF saddle node system evaluated at x, y.
+
+    """
+    
+    V = (1/3)*par[3]*x**3 - np.sqrt(par[4])*x**2 + 0.5*par[6]*y**2 + 0.5*par[5]*(x-y)**2
+    return V
+
+def potential_energy_2dof(x, y, par, model):
+    """
+    
+
+    Parameters
+    ----------
+    x : TYPE
+        independent variable value of the potential energy function.
+    y : TYPE
+        independent variable value of the potential energy function.
+    par : TYPE
+    
+        parameters of the potential energy function.
+    model : TYPE
+        model chosen for the potential energy function.
+
+    Returns
+    -------
+    V : TYPE
+        potential energy evaluated at x, y given the model system.
+
+    """
+    
+    dispatcher = {'harmonic' : V_harmonic_2dof, 'saddlenode' : V_SN_2dof}
+    try:
+        V = dispatcher[model](x, y, par)
+        #print(V)
+        return V
+    except:
+        return "Invalid function"
+
+def Qdist_H_lm_jk_FGH(a, b, c , d, N_x, N_y, h, par, model):
+    """
+    
+
+    Parameters
+    ----------
+    a : TYPE
+        left end point of the interval in x coordinate chosen for solving the time independent schrodinger equation.
+    b : TYPE
+        right end point of the interval in x coordinate chosen for solving the time independent schrodinger equation.
+    c : TYPE
+        left end point of the interval in y coordinate chosen for solving the time independent schrodinger equation.
+    d : TYPE
+        right end point of the interval in y coordinate chosen for solving the time independent schrodinger equation.
+    N_x : TYPE
+        number of grid points in x coordinate, must be an odd integer value.
+    N_y : TYPE
+        number of grid points in y coordinate, must be an odd integer value.
+    h : TYPE
+        reduced planck's constant of the system.
+    par : TYPE
+        parameters of the potential energy function.
+
+    Returns
+    -------
+    H_lm_jk : TYPE
+        Hamiltonian matrix which is a discretisation of the Hamiltonian operator, computed using the FGH method.
+
+    """
+    
+    dx = (b-a)/(N_x-1)
+    dpx = 2*np.pi / (N_x-1) / dx
+    dy = (d-c)/(N_y-1)
+    dpy = 2*np.pi / (N_y-1) / dy
+    H_lm_jk = np.zeros((N_x*N_y,N_x*N_y))
+    for i1 in range(N_x*N_y):
+        #print(i1)
+        for i2 in range(i1, N_x*N_y):
+            k = (i2 // N_x)
+            j = (i2 % N_x)
+            m = (i1 // N_x)
+            l = (i1 % N_x)
+            sum_rhalf = sum(np.cos(2*np.pi*np.arange(1, int((N_x+1)/2))*(j-l)/(N_x-1)))
+            sum_r = 2 * sum_rhalf + 1
+            sum_shalf = sum(np.cos(2*np.pi*np.arange(1, int((N_y+1)/2))*(k-m)/(N_y-1)))
+            sum_s = 2 * sum_shalf + 1
+            if j == l and k == m:
+                H_lm_jk[m*N_x+l,k*N_x+j] = H_lm_jk[m*N_x+l,k*N_x+j] + 2 * 1/(N_x-1) /(N_y-1)* h**2 * sum((np.arange(1, int((N_x+1)/2))*dpx)**2 / 2 * np.cos(2*np.pi*np.arange(1, int((N_x+1)/2))*(j-l)/(N_x-1))) * sum_s \
+                    + 2 * 1/(N_x-1) /(N_y-1)* h**2 * sum((np.arange(1, int((N_y+1)/2))*dpy)**2 / 2 * np.cos(2*np.pi*np.arange(1, int((N_y+1)/2))*(k-m)/(N_y-1))) * sum_r 
+                H_lm_jk[m*N_x+l,k*N_x+j] = H_lm_jk[m*N_x+l,k*N_x+j] + potential_energy_2dof((a+j*dx),(c+k*dy),par, model)
+                H_lm_jk[k*N_x+j,m*N_x+l] = H_lm_jk[m*N_x+l,k*N_x+j]
+            else:
+                H_lm_jk[m*N_x+l,k*N_x+j] = H_lm_jk[m*N_x+l,k*N_x+j] + 2 * 1/(N_x-1) /(N_y-1)* h**2 * sum((np.arange(1, int((N_x+1)/2))*dpx)**2 / 2 * np.cos(2*np.pi*np.arange(1, int((N_x+1)/2))*(j-l)/(N_x-1))) * sum_s \
+                    + 2 * 1/(N_x-1) /(N_y-1)* h**2 * sum((np.arange(1, int((N_y+1)/2))*dpy)**2 / 2 * np.cos(2*np.pi*np.arange(1, int((N_y+1)/2))*(k-m)/(N_y-1))) * sum_r
+                H_lm_jk[k*N_x+j,m*N_x+l] = H_lm_jk[m*N_x+l,k*N_x+j] 
+
+    return H_lm_jk
+
+def Qdist_H_lm_jk_FGHmod(a, b, c , d, N_x, N_y, h, par, model):
+    """
+    
+
+    Parameters
+    ----------
+    a : TYPE
+        left end point of the interval in x coordinate chosen for solving the time independent schrodinger equation.
+    b : TYPE
+        right end point of the interval in x coordinate chosen for solving the time independent schrodinger equation.
+    c : TYPE
+        left end point of the interval in y coordinate chosen for solving the time independent schrodinger equation.
+    d : TYPE
+        right end point of the interval in y coordinate chosen for solving the time independent schrodinger equation.
+    N_x : TYPE
+        number of grid points in x coordinate, must be an odd integer value.
+    N_y : TYPE
+        number of grid points in y coordinate, must be an odd integer value.
+    h : TYPE
+        reduced planck's constant of the system.
+    par : TYPE
+        parameters of the potential energy function.
+
+    Returns
+    -------
+    H_lm_jk : TYPE
+        Hamiltonian matrix which is a discretisation of the Hamiltonian operator, computed using a modification of the FGH method.
+
+    """
+    
+    dx = (b-a)/(N_x - 1)
+    dpx = 2*np.pi / (N_x - 1) / dx
+    dy = (d-c)/(N_y - 1)
+    dpy = 2*np.pi / (N_y - 1) / dy
+    H_lm_jk = np.zeros((N_x*N_y,N_x*N_y))
+    for i1 in range(N_x*N_y):
+        #print(i1)
+        for i2 in range(i1, N_x*N_y):
+            k = (i2 // (N_x))
+            j = (i2 % N_x)
+            m = (i1 // N_x)
+            l = (i1 % N_x)
+            if j == l and k == m:
+                H_lm_jk[m*N_x+l,k*N_x+j] = sum(2/(N_x - 1) * h**2 * ((np.arange(int((N_x+1)/2))*dpx)**2) / 2 * np.cos(2*np.pi*np.arange(int((N_x+1)/2))*(j-l)/(N_x - 1))*int(m == k)) \
+                    + sum(2/(N_y - 1) * h**2 * ((np.arange(int((N_y+1)/2))*dpy)**2) / 2 *np.cos(2*np.pi*np.arange(int((N_y+1)/2))*(k-m)/(N_y - 1))*int(l == j))
+                H_lm_jk[m*N_x+l,k*N_x+j] = H_lm_jk[m*N_x+l,k*N_x+j] + potential_energy_2dof((a+(j)*dx),(c+(k)*dy), par, model)
+                H_lm_jk[k*N_x+j,m*N_x+l] = H_lm_jk[m*N_x+l,k*N_x+j] 
+            else:
+                H_lm_jk[m*N_x+l,k*N_x+j] = sum(2/(N_x - 1) * h**2 * ((np.arange(int((N_x+1)/2))*dpx)**2) / 2 * np.cos(2*np.pi*np.arange(int((N_x+1)/2))*(j-l)/(N_x - 1))*int(m == k)) \
+                    + sum(2/(N_y - 1) * h**2 * ((np.arange(int((N_y+1)/2))*dpy)**2) / 2 *np.cos(2*np.pi*np.arange(int((N_y+1)/2))*(k-m)/(N_y - 1))*int(l == j))
+                H_lm_jk[k*N_x+j,m*N_x+l] = H_lm_jk[m*N_x+l,k*N_x+j] 
+
+    return H_lm_jk
+
+def Qdist_H_lm_jk_FD(a, b, c , d, N_x, N_y, h, par, model):
+    """
+    
+
+    Parameters
+    ----------
+    a : TYPE
+        left end point of the interval in x coordinate chosen for solving the time independent schrodinger equation.
+    b : TYPE
+        right end point of the interval in x coordinate chosen for solving the time independent schrodinger equation.
+    c : TYPE
+        left end point of the interval in y coordinate chosen for solving the time independent schrodinger equation.
+    d : TYPE
+        right end point of the interval in y coordinate chosen for solving the time independent schrodinger equation.
+    N_x : TYPE
+        number of grid points in x coordinate, must be an odd integer value.
+    N_y : TYPE
+        number of grid points in y coordinate, must be an odd integer value.
+    h : TYPE
+        reduced planck's constant of the system.
+    par : TYPE
+        parameters of the potential energy function.
+
+    Returns
+    -------
+    H_lm_jk : TYPE
+        Hamiltonian matrix which is a discretisation of the Hamiltonian operator, computed using the FD method.
+
+    """
+    
+    dx = (b-a) / (N_x-1)
+    #dpx = 2*np.pi / (N_x-1) / dx
+    dy = (d-c) / (N_y-1)
+    #dpy = 2*np.pi / (N_y-1) / dy
+    V_jk = np.zeros(((N_x-2)*(N_y-2), (N_x-2)*(N_y-2)))
+    T1_row = np.zeros((N_x-2)*(N_y-2))  
+    T1_row[0] = -2
+    T1_row[1] = 1
+    
+    T2_row = np.zeros((N_x-2)*(N_y-2))
+    T2_row[0] = -2
+    T2_row[N_x-2] = 1
+
+    T1_jk = linalg.toeplitz(T1_row, T1_row)
+    T2_jk = linalg.toeplitz(T2_row, T2_row)
+    for i in range((N_x-2)*(N_y-2)):
+        k = i // (N_x - 2)
+        j = i % (N_x - 2)
+        V_jk[i, i] = potential_energy_2dof((a+(j+1)*dx),(c+(k+1)*dy), par, model)
+    H_lm_jk =  -0.5 / dx / dx * h * h * T1_jk - 0.5 / dy / dy * h * h * T2_jk + V_jk
+    return H_lm_jk
+
+def Husimi_2dof(a, b, c, d, N_x, N_y, h, sigma_1, sigma_2, psi_x_y):
+    """
+    
+
+    Parameters
+    ----------
+    a : TYPE
+        left end point of the interval in x coordinate chosen for solving the time independent schrodinger equation.
+    b : TYPE
+        right end point of the interval in x coordinate chosen for solving the time independent schrodinger equation.
+    c : TYPE
+        left end point of the interval in y coordinate chosen for solving the time independent schrodinger equation.
+    d : TYPE
+        right end point of the interval in y coordinate chosen for solving the time independent schrodinger equation.
+    N_x : TYPE
+        number of grid points in x coordinate, must be an odd integer value.
+    N_y : TYPE
+        number of grid points in y coordinate, must be an odd integer value.
+    h : TYPE
+        reduced planck's constant of the system.
+    sigma_1 : TYPE
+        width of the minimum certainty state in x coordinate.
+    sigma_2 : TYPE
+        width of the minimum certainty state in y coordinate.
+    psi_x_y : TYPE
+        2 DOF normalised energy eigenfunction.
+
+    Returns
+    -------
+    H_2dof : TYPE
+        2 DOF Husimi function with zero p_x and zero p_y, based on the 2 DOF normalised energy eigenfunction, psi_x_y.
+
+    """
+    
+    dx = (b-a) / (N_x-1)
+    dy = (d-c) / (N_y-1)
+    H_2dof = np.zeros((N_x,N_y))
+    p_x = 0
+    p_y = 0
+    for j in range(N_x):
+        #print(j)
+        for k in range(N_y):
+            sum_cos = 0
+            sum_sin = 0
+            for l_1 in range(N_x):
+                for l_2 in range(N_y):
+                    sum_sin = sum_sin + np.exp(-(l_1-j)*dx*(l_1-j)*dx/2/sigma_1/sigma_1-(l_2-k)*dy*(l_2-k)*dy/2/sigma_2/sigma_2)* np.sin((a+l_1*dx)*p_x/h + (c+l_2*dy)*p_y/h)*psi_x_y[l_1, l_2] * dx * dy
+                    sum_cos = sum_cos + np.exp(-(l_1-j)*dx*(l_1-j)*dx/2/sigma_1/sigma_1-(l_2-k)*dy*(l_2-k)*dy/2/sigma_2/sigma_2)* np.cos((a+l_1*dx)*p_x/h + (c+l_2*dy)*p_y/h)*psi_x_y[l_1, l_2] * dx * dy
+            H_2dof[j, k] = 1 / (2 * np.pi * h) / (2 * np.pi * h) / np.pi / sigma_1 / sigma_2 * (sum_cos**2 + sum_sin**2)
+                
+    return H_2dof
+
+def Wigner_2dof(a, b, c, d, N_x, N_y, h, psi_x_y):
+    """
+    
+
+    Parameters
+    ----------
+    a : TYPE
+        left end point of the interval in x coordinate chosen for solving the time independent schrodinger equation.
+    b : TYPE
+        right end point of the interval in x coordinate chosen for solving the time independent schrodinger equation.
+    c : TYPE
+        left end point of the interval in y coordinate chosen for solving the time independent schrodinger equation.
+    d : TYPE
+        right end point of the interval in y coordinate chosen for solving the time independent schrodinger equation.
+    N_x : TYPE
+        number of grid points in x coordinate, must be an odd integer value.
+    N_x : TYPE
+        number of grid points in y coordinate, must be an odd integer value.
+    h : TYPE
+        reduced planck's constant of the system.
+    par : TYPE
+        parameters of the potential energy function.
+
+    Returns
+    -------
+    W_2dof : TYPE
+        2 DOF Wigner function with zero p_x and zero p_y, based on the 2 DOF normalised energy eigenfunction, psi_x_y.
+
+    """
+    
+    dx = (b-a) / (N_x-1)
+    dy = (d-c) / (N_y-1)
+    W_2dof = np.zeros((N_x,N_y))
+    p_x = 0
+    p_y = 0
+    for j in range(N_x):
+        #print(j)
+        for k in range(N_y):
+            for l1 in range(-min((N_x-1-j),j), min((N_x-1-j),j) + 1):
+                for l2 in range(-min((N_y-1-k),k), (min((N_y-1-k),k) + 1)):
+                    W_2dof[j, k] = W_2dof[j, k] +  1 / np.pi / np.pi / h /h * psi_x_y[j + l1, k + l2] * psi_x_y[j - l1, k - l2] \
+                      * np.cos(p_x * (2 * dx * l1) /h +  p_y * (2 * dy * l2) /h) * dx * dy
+    return W_2dof 
+
+def harmonic_2DOF_analytical(x, y, par, n_x, n_y, h):
+    """
+    
+
+    Parameters
+    ----------
+    x : TYPE
+        independent variable value of the potential energy function.
+    y : TYPE
+        independent variable value of the potential energy function.
+    n_x : TYPE
+        quantum number in x coordinate.
+    n_y : TYPE
+        quantum number in y coordinate.
+    h : TYPE
+        reduced planck's constant of the system.
+    par : TYPE
+        parameters of the potential energy function.
+
+    Returns
+    -------
+    psi : TYPE
+        analytical solution of the (n_x, n_y) th energy eigenfunction of the 2 DOF harmonic oscillator system evaluated at (x, y).
+
+    """
+    
+    psi = harmonic_1dof_analytical(x, par, n_x, h) * harmonic_1dof_analytical(y, par, n_y, h)
+    return psi
+
+def Wigner_2dof_harmonic(x, y, p_x, p_y, n_x, n_y, h, omega_x, omega_y):
+    """
+    
+
+    Parameters
+    ----------
+    x : TYPE
+        position value, as an input of the Wigner function.
+    y : TYPE
+        position value, as an input of the Wigner function.
+    p_x : TYPE
+        momentum value, as an input of the Wigner function.
+    p_y : TYPE
+        momentum value, as an input of the Wigner function.
+    n_x : TYPE
+        quantum number in x coordinate.
+    n_y : TYPE
+        quantum number in y coordinate.
+    h : TYPE
+        reduced planck's constant of the system.
+    omega_x : TYPE
+        parameter value of the 1 DOF harmonic oscillator in x coordinate.
+    omega_y : TYPE
+        parameter value of the 1 DOF harmonic oscillator in y coordinate.
+
+    Returns
+    -------
+    W_2dof : TYPE
+        analytical solution of the 2 DOF Wigner function of the (n_x, n_y) th excited state for 2 DOF harmonic oscillator.
+        this function only supports n_x,n_y = 0, 1.
+
+    """
+    
+    if n_x == 0 and n_y == 0:
+        W_2dof = Wigner_analytic_harmonic_0(x, p_x, h, omega_x) * Wigner_analytic_harmonic_0(y, p_y, h, omega_x)
+    elif n_x == 0 and n_y == 1:
+        W_2dof = Wigner_analytic_harmonic_0(x, p_x, h, omega_x) * Wigner_analytic_harmonic_1(y, p_y, h, omega_x)
+    elif n_x == 1 and n_y == 0:
+        W_2dof = Wigner_analytic_harmonic_1(x, p_x, h, omega_x) * Wigner_analytic_harmonic_0(y, p_y, h, omega_x)
+    return W_2dof
+
+def Husimi_2dof_harmonic(x, y, p_x, p_y, n_x, n_y, h, omega_x, omega_y, sigma_x, sigma_y):
+    """
+    
+
+    Parameters
+    ----------
+    x : TYPE
+        position value, as an input of the Husimi function.
+    y : TYPE
+        position value, as an input of the Husimi function.
+    p_x : TYPE
+        momentum value, as an input of the Husimi function.
+    p_y : TYPE
+        momentum value, as an input of the Husimi function.
+    n_x : TYPE
+        quantum number in x coordinate.
+    n_y : TYPE
+        quantum number in y coordinate.
+    h : TYPE
+        reduced planck's constant of the system.
+    omega_x : TYPE
+        parameter value of the 1 DOF harmonic oscillator in x coordinate.
+    omega_y : TYPE
+        parameter value of the 1 DOF harmonic oscillator in y coordinate.
+    sigma_1 : TYPE
+        width of the minimum certainty state in x coordinate.
+    sigma_2 : TYPE
+        width of the minimum certainty state in y coordinate.
+
+    Returns
+    -------
+    H_2dof : TYPE
+        analytical solution of the 2 DOF Husimi function of the (n_x, n_y) th excited state for 2 DOF harmonic oscillator.
+        this function only supports n_x,n_y = 0, 1.
+
+    """
+    
+    if n_x == 0 and n_y == 0:
+        H_2dof = Husimi_analytic_harmonic_0(x, p_x, h, omega_x, sigma_x) * Husimi_analytic_harmonic_0(y, p_y, h, omega_x, sigma_x)
+    elif n_x == 0 and n_y == 1:
+        H_2dof = Husimi_analytic_harmonic_0(x, p_x, h, omega_x, sigma_x) * Husimi_analytic_harmonic_1(y, p_y, h, omega_x, sigma_x)
+    elif n_x == 1 and n_y == 0:
+        H_2dof = Husimi_analytic_harmonic_1(x, p_x, h, omega_x, sigma_x) * Husimi_analytic_harmonic_0(y, p_y, h, omega_x, sigma_x)
+    return H_2dof

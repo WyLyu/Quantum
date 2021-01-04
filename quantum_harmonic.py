@@ -337,3 +337,319 @@ plt.show()
 # plt.savefig('quantum_harm1DOF_husimi_ana_1.pdf', format='pdf', \
 #             bbox_inches='tight')
 
+
+#%% 2 DOF system 
+#Comparison of the analytical solution of the 2 DOF harmonic oscilattor with its numerical solution computed using the FGH method.
+MASS_A=1.0
+MASS_B=1.0
+EPSILON_S=0.0
+alpha=1.0
+mu = 2
+N_x = 21
+N_y = 23
+omega = 1.0
+epsilon = 0.0
+a = -4
+b = 4
+c = -4
+d = 4
+h = 1
+parameters = np.array([MASS_A, MASS_B, EPSILON_S, alpha, mu, epsilon, omega])
+#H=quantum_1DOF.Qdist_H_lm_jk_FGH(a, b, c, d, N_x, N_y, h, parameters, 'harmonic')
+H=quantum_1DOF.Qdist_H_lm_jk_FGHmod(a, b, c, d, N_x, N_y, h, parameters, 'harmonic')
+
+evalue,evec=np.linalg.eig(H)
+idx = evalue.argsort()[::-1]   
+evalue = evalue[idx]
+evec = evec[:,idx]
+#%%
+sns.set(font_scale = 2)
+sns.set_style("whitegrid")
+ax = plt.gca()
+n = 1
+plotx = np.linspace(a,b,N_x)
+ploty = np.linspace(c,d,N_y)
+X,Y = np.meshgrid(plotx, ploty)
+phi_x_y = np.reshape(evec[:,-n],(N_y,N_x)) * np.sqrt((N_x-1)/(b-a)) * np.sqrt((N_y-1)/(d-c))
+plt.contour(X, Y, phi_x_y, 20,cmap='RdGy' %(evalue[-n]))
+
+ax.set_xlabel(r'$x$', fontsize=axis_fs)
+ax.set_ylabel(r'$y$', fontsize=axis_fs)
+ax.set_xlim(a, b)
+ax.set_ylim(c, d)
+ax.set_title(r'$E_{%s}=%.3f$' %(n, evalue[-n]))
+plt.colorbar()
+plt.show()
+# plt.savefig('quantum_harm2DOF_eigenvec_4_FGH.pdf', format='pdf', \
+#             bbox_inches='tight')
+
+
+#%% Analytical solution of the 2 DOF harmonic oscilattor
+psi_x_y = np.zeros((N_y, N_x))
+sns.set(font_scale = 2)
+sns.set_style("whitegrid")
+ax = plt.gca()
+n_x = 0 # n_x, n_y are quantum numbers in x, y coordinates
+n_y = 0
+plotx = np.linspace(a,b,N_x)
+ploty = np.linspace(c,d,N_y)
+X,Y = np.meshgrid(plotx, ploty)
+evalue = h*parameters[4]*(n_x+n_y+1)
+for i in range(N_x):
+    for j in range(N_y):
+        psi_x_y[j, i] = quantum_1DOF.harmonic_2DOF_analytical(plotx[i], ploty[j], omega, n_x, n_y, h)
+# projection of the energy eigenfunction on the x-y configuration space
+cset1 = plt.contour(X, Y, psi_x_y, 20, \
+                   cmap='RdGy' %(evalue))
+ax.set_xlabel(r'$x$', fontsize=axis_fs)
+ax.set_ylabel(r'$y$', fontsize=axis_fs)
+ax.set_xlim(a, b)
+ax.set_ylim(c, d)
+ax.set_title(r'$E_{%s,%s}=%.3f$' %(n_x, n_y, evalue))
+plt.colorbar()
+plt.show()
+# plt.savefig('quantum_harm2DOF_eigenvec_0_ana.pdf', format='pdf', \
+#             bbox_inches='tight')
+
+
+#%% Comparison of the analytical solution of the 2 DOF harmonic oscilattor with its numerical solution computed using the FD method.
+MASS_A=1.0
+MASS_B=1.0
+EPSILON_S=0.0
+alpha=1.0
+mu = 2
+N_x = 41
+N_y = 43
+omega = 1.0
+epsilon = 0.0
+a = -4
+b = 4
+c = -4
+d = 4
+h = 1
+parameters = np.array([MASS_A, MASS_B, EPSILON_S, alpha, mu, epsilon, omega])
+H=quantum_1DOF.Qdist_H_lm_jk_FD(a, b, c, d, N_x, N_y, h, parameters, 'harmonic')
+
+evalue,evec=np.linalg.eig(H)
+idx = evalue.argsort()[::-1]   
+evalue = evalue[idx]
+evec = evec[:,idx]
+
+
+#%%
+sns.set(font_scale = 2)
+sns.set_style("whitegrid")
+ax = plt.gca()
+n = 1
+plotx = np.linspace(a, b, N_x)
+ploty = np.linspace(c, d, N_y)
+
+X,Y = np.meshgrid(plotx, ploty)
+psi_x_y = np.reshape(evec[:,-n],(N_y-2,N_x-2)) * np.sqrt((N_x-1)/(b-a)) * np.sqrt((N_y-1)/(d-c))
+psi_x_y_wbound = np.zeros((N_y, N_x))
+psi_x_y_wbound[1:(N_y-1), 1:(N_x-1)] = psi_x_y
+plt.contour(X, Y, psi_x_y_wbound, 20,cmap='RdGy' %(evalue[-n]))
+
+ax.set_xlabel(r'$x$', fontsize=axis_fs)
+ax.set_ylabel(r'$y$', fontsize=axis_fs)
+ax.set_xlim(a, b)
+ax.set_ylim(c, d)
+ax.set_title(r'$E_{%s}=%.3f$' %(n, evalue[-n]))
+plt.colorbar()
+plt.show()
+# plt.savefig('quantum_sd2DOF_eigenvec_0_FD.pdf', format='pdf', \
+#             bbox_inches='tight')
+
+
+#%% Analytical solution of the 2 DOF Wigner function with p_x=p_y=0, the function Wigner_2dof_harmonic only support n_x, n_y =0,1
+MASS_A=1.0
+MASS_B=1.0
+EPSILON_S=0.0
+n_x = 0 # only support n_x=0,1 in the analytical solution calculation
+n_y = 0 # only support n_y=0,1 in the analytical solution calculation
+N_x = 21
+N_y = 23
+h = 1
+a = -4
+b = 4
+c = -4
+d = 4
+alpha = 1
+mu = 1
+omega = 1.0
+epsilon = 0.0
+
+parameters = np.array([MASS_A, MASS_B, EPSILON_S, alpha, mu, epsilon, omega])
+plotx = np.linspace(a, b, N_x)
+ploty = np.linspace(c, d, N_y)
+X,Y = np.meshgrid(plotx, ploty)
+evalue = h*parameters[4]*(n_x+n_y+1)
+sns.set(font_scale = 2)
+sns.set_style("whitegrid")
+ax = plt.gca()
+Wigner_2dof_ana = np.zeros((N_y, N_x))
+for i in range(N_x):
+    for j in range(N_y):
+        Wigner_2dof_ana[j, i] = quantum_1DOF.Wigner_2dof_harmonic(plotx[i], ploty[j], 0, 0, n_x, n_y, h, omega, omega)
+cset1 = plt.contour(X, Y, Wigner_2dof_ana, 20, \
+                   cmap='RdGy')
+
+ax.set_xlabel(r'$x$', fontsize=axis_fs)
+ax.set_ylabel(r'$y$', fontsize=axis_fs)
+ax.set_xlim(a, b)
+ax.set_ylim(c, d)
+ax.set_title(r'$E_{%s,%s}=%.3f$' %(n_x, n_y, evalue))
+plt.colorbar()
+plt.show()
+# plt.savefig('quantum_harm2DOF_wigner_2_ana_px0py0.pdf', format='pdf', \
+#             bbox_inches='tight')
+
+
+#%% Compute the energy eigenfunction using the FGH method
+#H=quantum_1DOF.Qdist_H_lm_jk_FGH(a, b, c, d, N_x, N_y, h, parameters, 'harmonic')
+H=quantum_1DOF.Qdist_H_lm_jk_FGHmod(a, b, c, d, N_x, N_y, h, parameters, 'harmonic')
+
+evalue,evec=np.linalg.eig(H)
+idx = evalue.argsort()[::-1]   
+evalue = evalue[idx]
+evec = evec[:,idx]
+
+
+#%% Numerical solution of the 2 DOF Wigner function with the energy eigenfunction computed using the FGH method
+plotx = np.linspace(a, b, N_x)
+ploty = np.linspace(c, d, N_y)
+X,Y = np.meshgrid(plotx, ploty)
+sns.set(font_scale = 2)
+sns.set_style("whitegrid")
+ax = plt.gca()
+n = 1
+psi_x_y = np.reshape(evec[:,-n],(N_y,N_x)) * np.sqrt((N_x-1)/(b-a)) * np.sqrt((N_y-1)/(d-c))
+W_2dof = quantum_1DOF.Wigner_2dof(a, b, c, d, N_x, N_y, h, psi_x_y.transpose())
+# projection of the Wigner function on the x-y configuration space
+cset1 = plt.contour(X, Y, W_2dof.transpose(), 20, \
+                   cmap='RdGy')
+
+ax.set_xlabel(r'$x$', fontsize=axis_fs)
+ax.set_ylabel(r'$y$', fontsize=axis_fs)
+ax.set_xlim(a, b)
+ax.set_ylim(c, d)
+plt.colorbar()
+plt.show()
+# plt.savefig('quantum_harm2DOF_wigner_2_num_px0py0.pdf', format='pdf', \
+#             bbox_inches='tight')
+
+
+#%% Compute the energy eigenfunction using the FD method
+H=quantum_1DOF.Qdist_H_lm_jk_FD(a, b, c, d, N_x, N_y, h, parameters, 'harmonic')
+
+evalue,evec=np.linalg.eig(H)
+idx = evalue.argsort()[::-1]   
+evalue = evalue[idx]
+evec = evec[:,idx]
+
+
+#%% Numerical solution of the 2 DOF Wigner function with the energy eigenfunction computed using the FD method
+plotx = np.linspace(a, b, N_x)
+ploty = np.linspace(c, d, N_y)
+X,Y = np.meshgrid(plotx, ploty)
+sns.set(font_scale = 2)
+sns.set_style("whitegrid")
+ax = plt.gca()
+n = 1
+psi_x_y = np.reshape(evec[:,-n],(N_y-2,N_x-2)) * np.sqrt((N_x-1)/(b-a)) * np.sqrt((N_y-1)/(d-c))
+psi_x_y_wbound = np.zeros((N_y, N_x))
+psi_x_y_wbound[1:(N_y-1), 1:(N_x-1)] = psi_x_y
+W_2dof = quantum_1DOF.Wigner_2dof(a, b, c, d, N_x, N_y, h, psi_x_y_wbound.transpose())
+# projection of the Wigner function on the x-y configuration space
+cset1 = plt.contour(X, Y, W_2dof.transpose(), 20, \
+                   cmap='RdGy')
+
+ax.set_xlabel(r'$x$', fontsize=axis_fs)
+ax.set_ylabel(r'$y$', fontsize=axis_fs)
+ax.set_xlim(a, b)
+ax.set_ylim(c, d)
+plt.colorbar()
+plt.show()
+# plt.savefig('quantum_harm2DOF_wigner_2_num_px0py0.pdf', format='pdf', \
+#             bbox_inches='tight')
+
+
+#%% Analytical solution of the 2 DOF Husimi function with p_x=p_y=0, the function Wigner_2dof_harmonic only support n_x, n_y =0,1
+MASS_A=1.0
+MASS_B=1.0
+EPSILON_S=0.0
+n_x = 0 # only support n_x=0,1 in the analytical solution calculation
+n_y = 0 # only support n_y=0,1 in the analytical solution calculation
+N_x = 21
+N_y = 23
+h = 1
+a = -4
+b = 4
+c = -4
+d = 4
+alpha = 1
+mu = 1
+omega = 1.0
+epsilon = 0.0
+sigma_1 = 1
+sigma_2 = 1
+parameters = np.array([MASS_A, MASS_B, EPSILON_S, alpha, mu, epsilon, omega])
+plotx = np.linspace(a, b, N_x)
+ploty = np.linspace(c, d, N_y)
+X,Y = np.meshgrid(plotx, ploty)
+evalue = h*parameters[4]*(n_x+n_y+1)
+sns.set(font_scale = 2)
+sns.set_style("whitegrid")
+ax = plt.gca()
+Husimi_2dof_ana = np.zeros((N_y, N_x))
+for i in range(N_x):
+    for j in range(N_y):
+        Husimi_2dof_ana[j, i] = quantum_1DOF.Husimi_2dof_harmonic(plotx[i], ploty[j], 0, 0, n_x, n_y, h, omega, omega, sigma_1, sigma_2)
+cset1 = plt.contour(X, Y, Husimi_2dof_ana, 20, \
+                   cmap='RdGy')
+
+ax.set_xlabel(r'$x$', fontsize=axis_fs)
+ax.set_ylabel(r'$y$', fontsize=axis_fs)
+ax.set_xlim(a, b)
+ax.set_ylim(c, d)
+ax.set_title(r'$E_{%s,%s}=%.3f$' %(n_x, n_y, evalue))
+plt.colorbar()
+plt.show()
+# plt.savefig('quantum_harm2DOF_husimi_2_ana_px0py0.pdf', format='pdf', \
+#             bbox_inches='tight')
+
+
+#%% Compute the energy eigenfunction using the FGH method
+#H=quantum_1DOF.Qdist_H_lm_jk_FGH(a, b, c, d, N_x, N_y, h, parameters, 'harmonic')
+H=quantum_1DOF.Qdist_H_lm_jk_FGHmod(a, b, c, d, N_x, N_y, h, parameters, 'harmonic')
+
+evalue,evec=np.linalg.eig(H)
+idx = evalue.argsort()[::-1]   
+evalue = evalue[idx]
+evec = evec[:,idx]
+
+
+#%% Numerical solution of the 2 DOF Husimi function with the energy eigenfunction computed using the FGH method
+plotx = np.linspace(a, b, N_x)
+ploty = np.linspace(c, d, N_y)
+X,Y = np.meshgrid(plotx, ploty)
+sns.set(font_scale = 2)
+sns.set_style("whitegrid")
+ax = plt.gca()
+n = 1
+psi_x_y = np.reshape(evec[:,-n],(N_y,N_x)) * np.sqrt((N_x-1)/(b-a)) * np.sqrt((N_y-1)/(d-c))
+H_2dof = quantum_1DOF.Husimi_2dof(a, b, c, d, N_x, N_y, h, omega, omega, psi_x_y.transpose())
+# projection of the PES on the x-y configuration space
+cset1 = plt.contour(X, Y, H_2dof.transpose(), 20, \
+                   cmap='RdGy')
+
+ax.set_xlabel(r'$x$', fontsize=axis_fs)
+ax.set_ylabel(r'$y$', fontsize=axis_fs)
+ax.set_xlim(a, b)
+ax.set_ylim(c, d)
+plt.colorbar()
+plt.show()
+# plt.savefig('quantum_harm2DOF_husimi_2_num_px0py0.pdf', format='pdf', \
+#             bbox_inches='tight')
+# plt.savefig('quantum_sd2DOF_husimi_2_num_px0py0_ep0dot1.pdf', format='pdf', \
+#             bbox_inches='tight')
