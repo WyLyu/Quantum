@@ -242,7 +242,7 @@ plotp = np.linspace(a, b, N)
 X,P = np.meshgrid(plotx, plotp)
 W = quantum_1DOF.Wigner(a, b, N, h, evec[:,-n]*np.sqrt((N-1)/(b-a)))
 # W = quantum_1DOF.Wigner(a, b, N, h, quantum_1DOF.harmonic_1dof_analytical(np.linspace(a, b, N), parameters, 4, 1))
-cset1 = plt.contour(X, P, W, 20, \
+cset1 = plt.contour(X, P, W.transpose(), 20, \
                    cmap='RdGy')
 ax.set_xlabel(r'$x$', fontsize=axis_fs)
 ax.set_ylabel(r'$p$', fontsize=axis_fs)
@@ -269,7 +269,7 @@ W = np.zeros((N, N))
 for j in range(N):
     for k in range(N):
         W[j, k] = quantum_1DOF.Wigner_analytic_harmonic_1(plotx[j], plotp[k], h, 1)
-cset1 = plt.contour(X, P, W, 20, \
+cset1 = plt.contour(X, P, W.transpose(), 20, \
                    cmap='RdGy')
 
 ax.set_xlabel(r'$x$', fontsize=axis_fs)
@@ -298,7 +298,7 @@ plotp = np.linspace(a, b, N)
 X,P = np.meshgrid(plotx, plotp)
 H_1DOF = quantum_1DOF.Husimi(a, b, N, h, 1, evec[:,-n]*np.sqrt((N-1)/(b-a)))
 # H_1DOF = quantum_1DOF.Husimi(a,b,N, h, 1, quantum_1DOF.harmonic_1dof_analytical(np.linspace(a, b, N), parameters, n-1, 1))
-cset1 = plt.contour(X, P, H_1DOF, 20, \
+cset1 = plt.contour(X, P, H_1DOF.transpose(), 20, \
                    cmap='RdGy')
 ax.set_xlabel(r'$x$', fontsize=axis_fs)
 ax.set_ylabel(r'$p$', fontsize=axis_fs)
@@ -325,7 +325,7 @@ H_1DOF = np.zeros((N, N))
 for j in range(N):
     for k in range(N):
         H_1DOF[j, k] = quantum_1DOF.Husimi_analytic_harmonic_1(plotx[j], plotp[k], h, 1, 1)
-cset1 = plt.contour(X, P, H_1DOF, 20, \
+cset1 = plt.contour(X, P, H_1DOF.transpose(), 20, \
                    cmap='RdGy')
 
 ax.set_xlabel(r'$x$', fontsize=axis_fs)
