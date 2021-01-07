@@ -638,7 +638,7 @@ sns.set_style("whitegrid")
 ax = plt.gca()
 n = 1
 psi_x_y = np.reshape(evec[:,-n],(N_y,N_x)) * np.sqrt((N_x-1)/(b-a)) * np.sqrt((N_y-1)/(d-c))
-H_2dof = quantum_1DOF.Husimi_2dof(a, b, c, d, N_x, N_y, h, omega, omega, psi_x_y.transpose())
+H_2dof = quantum_1DOF.Husimi_2dof(a, b, c, d, N_x, N_y, h, sigma_1, sigma_2, psi_x_y.transpose())
 # projection of the PES on the x-y configuration space
 cset1 = plt.contour(X, Y, H_2dof.transpose(), 20, \
                    cmap='RdGy')
