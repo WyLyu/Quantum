@@ -25,6 +25,9 @@ import seaborn as sns
 from scipy.special import eval_hermite
 from scipy.special import gamma
 from scipy.special import genlaguerre
+import sympy
+from sympy.solvers import solve
+from sympy import Symbol
 
 #%% functions for the 1 DOF system 
 # class potential_energy():
@@ -92,6 +95,27 @@ def V_harmonic_1dof(x, par):
     V =  0.5*par**2*x**2
     return V
 
+def V_invert_harmonic_1dof(x, par):
+    """
+    
+
+    Parameters
+    ----------
+    x : TYPE
+        independent variable value of the potential energy function.
+    par : TYPE
+        parameters of the potential energy function.
+
+    Returns
+    -------
+    V : TYPE
+        potential energy of the 1 DOF inverted harmonic oscillator system evaluated at x.
+
+    """
+    
+    V =  -0.5*par**2*x**2
+    return V
+
 def V_morse_1dof(x, par):
     """
     
@@ -115,7 +139,6 @@ def V_morse_1dof(x, par):
     xe = par[2]
     V =  De * ((1 - np.e**(-aa*(x-xe)))**2 - 1)
     return V
-
 
 def harmonic_1dof_analytical(x, par, n, h):
     """
@@ -178,6 +201,138 @@ def morse_1dof_analytical(x, par, n, h):
     psi = N_n * z ** (lamb - n - 0.5) * np.e**(- 0.5 * z) * genlaguerre(n,2 * lamb - 2 * n - 1 )(z)
     return E, psi
 
+def invert_harmonic_1dof_evalue_analytical(par, h, N_a, L):
+    """
+    
+
+    Parameters
+    ----------
+    par : TYPE
+        parameters of the potential energy function.
+    h : TYPE
+        reduced planck's constant of the system.
+    N_a : TYPE
+        highest order of the polynomial that has nonzero terms. 
+    L : TYPE
+        boundary value that is used for solving the schrodinger equation.
+
+    Returns
+    -------
+    a_odd_real : TYPE
+        real solution of the odd function psi_2(z) that satisfy the boundary condition at L, used to determine the energy eigenvalues.
+    a_even_odd : TYPE
+        real solution of the even function psi_1(z) that satisfy the boundary condition at L, used to determine the energy eigenvalues.
+
+    """
+    a = Symbol('a')
+    L_0 = L * np.sqrt(2 * par / h)
+    c_a = []
+    c_a.append(0)
+    c_a.append(0)
+    c_a.append(1)
+    c_a.append(1)
+    sum_odd = c_a[2]*L_0
+    sum_even = c_a[3]
+    for i in range(4, (N_a+2)):
+        c_a.append(a * c_a[i-2] - 0.25 * (i-2-2) * (i-2-3) * c_a[i-4])
+        if i % 2 == 1:
+            sum_odd = sum_odd + c_a[i]*L_0**(i-2)/math.factorial(i-2)
+        else:
+            sum_even = sum_even + c_a[i]*L_0**(i-2)/math.factorial(i-2)
+                
+    a_odd = solve(sum_odd, a)
+    a_even = solve(sum_even, a)
+    a_odd_real = []
+    a_even_real = []
+    for i in range(len(a_even)):
+        if a_even[i].is_real==True:
+            a_even_real.append(float(a_even[i]))
+    for i in range(len(a_odd)):
+        if a_odd[i].is_real==True:
+            a_odd_real.append(float(a_odd[i]))
+    
+    return a_odd_real, a_even_real
+
+def invert_harmonic_1dof_evec_analytical(x, par, h, N_a, a, model):
+    """
+    
+
+    Parameters
+    ----------
+    x : TYPE
+        independent variable value of the potential energy function.
+    par : TYPE
+        parameters of the potential energy function.
+    h : TYPE
+        reduced planck's constant of the system.
+    N_a : TYPE
+        highest order of the polynomial that has nonzero terms. 
+    a : TYPE
+        parameter that is related to the energy eigenvalue
+    model : TYPE
+        return old/even function of the analytical solution of the energy eigenfunction
+
+    Returns
+    -------
+    f_odd : TYPE
+        odd function of the analytical solution of the energy eigenfunction of the 1 DOF inverted harmonic oscillator system evaluated at x.
+    f_even : TYPE
+        even function of the analytical solution of the energy eigenfunction of the 1 DOF inverted harmonic oscillator system evaluated at x.
+
+    """
+    
+    c = np.zeros(N_a+2)
+    c[2] = 1
+    c[3] = 1
+    f_even = 1
+    f_odd = np.sqrt(2 * par / h)*x
+    for i in range(4, (N_a+2)):
+        c[i] = a * c[i-2] - 0.25 * (i-2-2) * (i-2-3) * c[i-4]
+        if i % 2 == 1:
+            f_odd = f_odd + c[i]*(np.sqrt(2 * par / h)*x)**(i-2)/math.factorial(i-2)
+        else:
+            f_even = f_even + c[i]*(np.sqrt(2 * par / h)*x)**(i-2)/math.factorial(i-2)
+    if model == 'odd':
+        return f_odd
+    elif model == 'even':
+        return f_even
+
+def invert_harmonic_1dof_analytical(x, par, n, h, N_a, L):
+    """
+    
+
+    Parameters
+    ----------
+    x : TYPE
+        independent variable value of the potential energy function.
+    par : TYPE
+        parameters of the potential energy function.
+    n : TYPE
+        nth excited energy state of the system, starting from zero.
+    h : TYPE
+        reduced planck's constant of the system.
+
+    Returns
+    -------
+    E : TYPE
+        analytical solution of the nth energy eigenvalue of the 1 DOF inverted harmonic oscillator system.
+    psi : TYPE
+        analytical solution of the nth energy eigenfunction of the 1 DOF inverted harmonic oscillator system evaluated at x.
+
+    """
+    
+    a_odd_real, a_even_real = invert_harmonic_1dof_evalue_analytical(par, h, N_a, L)
+    a_real = np.concatenate((a_even_real, a_odd_real), axis=None)
+    index = np.argsort(a_real)[-n-1]
+    # print(index)
+    if index >= len(a_even_real):
+        evec_ana = invert_harmonic_1dof_evec_analytical(x, par, h, N_a, a_real[index], 'odd')
+    else:
+        evec_ana = invert_harmonic_1dof_evec_analytical(x, par, h, N_a, a_real[index], 'even')
+    e_vec_ana_norm = evec_ana/np.linalg.norm(evec_ana)
+    E = -h*par*a_real[index]
+    psi = e_vec_ana_norm
+    return E, psi
 
 def potential_energy_1dof(x, par, model):
     """
@@ -200,7 +355,7 @@ def potential_energy_1dof(x, par, model):
 
     """
     
-    dispatcher = {'harmonic' : V_harmonic_1dof, 'saddlenode' : V_SN_1dof, 'morse' : V_morse_1dof}
+    dispatcher = {'invertharmonic' : V_invert_harmonic_1dof, 'harmonic' : V_harmonic_1dof, 'saddlenode' : V_SN_1dof, 'morse' : V_morse_1dof}
     try:
         V = dispatcher[model](x, par)
         # print(V)

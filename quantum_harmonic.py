@@ -25,6 +25,10 @@ import seaborn as sns
 from scipy.special import eval_hermite
 from scipy.special import gamma
 from scipy.special import genlaguerre
+import sympy
+from sympy.solvers import solve
+from sympy import Symbol
+
 fal = 30 # fontsize axis labels
 
 ftl = 20 # fontsize tick labels
@@ -215,6 +219,40 @@ ax.set_xlabel(r'$x$', fontsize=axis_fs)
 ax.set_ylabel(r'normalised energy eigenvector $\psi_{n}$', fontsize=axis_fs)
 ax.set_xlim(-3, 10)
 ax.set_ylim(-1, 1)
+
+
+#%% Comparison of the analytical solution of the inverted harmonic oscilattor with its numerical solution using the FD method. 
+L = np.sqrt(2)/4
+omega = 1.0
+h = 1
+N = 279
+N_a = 22
+H=quantum_1DOF.Qdist_H_jk_FD(-L, L, N, h, omega, 'invertharmonic')
+
+
+#%%
+evalue,evec=np.linalg.eig(H)
+idx = evalue.argsort()[::-1]   
+evalue = evalue[idx]
+evec = evec[:,idx]
+x_range = np.linspace(-L,L,N)
+evec_wbound = np.zeros((N, N-2))
+evec_wbound[1:N-1, :] = evec
+
+n = 2
+sns.set(font_scale = 2)
+sns.set_style("whitegrid")
+ax = plt.gca()
+plot = ax.plot((-L+np.arange(N)*(2*L)/(N-1)),evec_wbound[:,-n-1]*np.sqrt((N-1)/(2*L)), '-',lw=lw,label=r'$E_%s = %.2f$, numer' %(n, evalue[-n-1]))
+
+E_n, psi_n = quantum_1DOF.invert_harmonic_1dof_analytical(x_range, omega, n, h, N_a, L)
+plotan = ax.plot(x_range,psi_n*np.sqrt((N-1)/(2*L)), '-',lw=lw,label=r'$E_%s = %.2f$, analy' %(n, E_n))
+
+legend = ax.legend(loc='best')
+ax.set_xlabel(r'$x$', fontsize=axis_fs)
+ax.set_ylabel(r'normalised energy eigenvector $\psi_{n}$', fontsize=axis_fs)
+ax.set_xlim(-L, L)
+ax.set_ylim(-10, 10)
 
 
 #%% numerical solution of the Wigner function for 1 DOF harmonic oscillator, eigenfunction computed using the FGH method
